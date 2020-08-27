@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import '../helpers/contact_helper.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ContactPage extends StatefulWidget {
   final Contact contact;
@@ -19,19 +20,19 @@ class _ContactPageState extends State<ContactPage> {
   final _nameFocus = FocusNode();
 
   bool _userEdited = false;
-  Contact _editContact;
+  Contact _editedContact;
 
   @override
   void initState() {
     super.initState();
 
     if (widget.contact == null) {
-      _editContact = Contact();
+      _editedContact = Contact();
     } else {
-      _editContact = Contact.fromMap(widget.contact.toMap());
-      _nameController.text = _editContact.name;
-      _emailController.text = _editContact.email;
-      _phoneController.text = _editContact.phone;
+      _editedContact = Contact.fromMap(widget.contact.toMap());
+      _nameController.text = _editedContact.name;
+      _emailController.text = _editedContact.email;
+      _phoneController.text = _editedContact.phone;
     }
   }
 
@@ -41,15 +42,15 @@ class _ContactPageState extends State<ContactPage> {
       onWillPop: _requestPop,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(_editContact.name ?? "Novo Contato"),
+          title: Text(_editedContact.name ?? "Novo Contato"),
           backgroundColor: Colors.red,
           centerTitle: true,
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            if(_editContact.name != null && _editContact.name.isNotEmpty){
-              Navigator.pop(context, _editContact);
-            }else{
+            if (_editedContact.name != null && _editedContact.name.isNotEmpty) {
+              Navigator.pop(context, _editedContact);
+            } else {
               FocusScope.of(context).requestFocus(_nameFocus);
             }
           },
@@ -67,11 +68,20 @@ class _ContactPageState extends State<ContactPage> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     image: DecorationImage(
-                        image: _editContact.img != null
-                            ? FileImage(File(_editContact.img))
+                        image: _editedContact.img != null
+                            ? FileImage(File(_editedContact.img))
                             : AssetImage("images/person.png")),
                   ),
                 ),
+                onTap: () {
+                  ImagePicker.pickImage(source: ImageSource.gallery)
+                      .then((file) {
+                    if (file == null) return;
+                    setState(() {
+                      _editedContact.img = file.path;
+                    });
+                  });
+                },
               ),
               TextField(
                   decoration: InputDecoration(labelText: "Nome"),
@@ -80,7 +90,7 @@ class _ContactPageState extends State<ContactPage> {
                   onChanged: (text) {
                     _userEdited = true;
                     setState(() {
-                      _editContact.name = text;
+                      _editedContact.name = text;
                     });
                   }),
               TextField(
@@ -88,7 +98,7 @@ class _ContactPageState extends State<ContactPage> {
                 controller: _emailController,
                 onChanged: (text) {
                   _userEdited = true;
-                  _editContact.email = text;
+                  _editedContact.email = text;
                 },
                 keyboardType: TextInputType.emailAddress,
               ),
@@ -97,7 +107,7 @@ class _ContactPageState extends State<ContactPage> {
                 decoration: InputDecoration(labelText: "Telefone"),
                 onChanged: (text) {
                   _userEdited = true;
-                  _editContact.phone = text;
+                  _editedContact.phone = text;
                 },
                 keyboardType: TextInputType.phone,
               )
@@ -109,33 +119,32 @@ class _ContactPageState extends State<ContactPage> {
   }
 
   Future<bool> _requestPop() {
-    if(_userEdited){
+    if (_userEdited) {
       showDialog(
-        context: context,
-        builder: (context){
-          return AlertDialog(
-            title: Text("Descartar alteraçoes?"),
-            content: Text("Se sair as alteracoes serao perdidas"),
-            actions: <Widget>[
-              FlatButton(
-                child: Text("Cancelar"),
-                onPressed: (){
-                  Navigator.pop(context);
-                },
-              ),
-              FlatButton(
-                child: Text("Sim"),
-                onPressed: (){
-                  Navigator.pop(context);
-                  Navigator.pop(context);
-                },
-              )
-            ],
-          );
-        }
-      );
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text("Descartar alteraçoes?"),
+              content: Text("Se sair as alteracoes serao perdidas"),
+              actions: <Widget>[
+                FlatButton(
+                  child: Text("Cancelar"),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+                FlatButton(
+                  child: Text("Sim"),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pop(context);
+                  },
+                )
+              ],
+            );
+          });
       return Future.value(false);
-    }else{
+    } else {
       return Future.value(true);
     }
   }
