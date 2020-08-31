@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "774582160239",
+    "firebase_url": "https://chat-udemy-ce556.firebaseio.com",
+    "project_id": "chat-udemy-ce556",
+    "storage_bucket": "chat-udemy-ce556.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:774582160239:android:4cd94dc6ee2efc677d369a",
+        "android_client_info": {
+          "package_name": "br.com.renatospindola.chat_firebase"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "774582160239-8b42jd9a21fbvlimk5mrul55gmvksk0k.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "br.com.renatospindola.chat_firebase",
+            "certificate_hash": "e554b69c1ca64d7f9f5e3935d50dd24102ffe8bf"
+          }
+        },
+        {
+          "client_id": "774582160239-jiku4a523mamu218p8tci0u29mngqphf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDGnSACUuU4Zyw3fFG_-kh4DrpPhHHK8cE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "774582160239-jiku4a523mamu218p8tci0u29mngqphf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
