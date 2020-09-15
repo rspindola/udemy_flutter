@@ -7,6 +7,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import 'chat_message.dart';
+
 class ChatScreen extends StatefulWidget {
   @override
   _ChatScreenState createState() => _ChatScreenState();
@@ -17,19 +19,21 @@ class _ChatScreenState extends State<ChatScreen> {
   final GlobalKey<ScaffoldState> _scafoldKey = GlobalKey<ScaffoldState>();
 
   FirebaseUser _currentUser;
+  bool _isLoading = false;
 
   @override
-  void setState(fn) {
-    super.setState(fn);
+  void initState() {
+    super.initState();
     FirebaseAuth.instance.onAuthStateChanged.listen((user) {
-      _currentUser = user;
+      setState(() {
+        _currentUser = user;
+      });
     });
   }
 
   Future<FirebaseUser> _getUser() async {
     if (_currentUser != null) return _currentUser;
     try {
-      print('entrou no catch');
       final GoogleSignInAccount googleSignInAccount =
           await googleSignIn.signIn();
       final GoogleSignInAuthentication googleSignInAuthentication =
@@ -47,13 +51,14 @@ class _ChatScreenState extends State<ChatScreen> {
       return user;
     } catch (error) {
       print(error);
+      return null;
     }
   }
 
   void _sendMessage({String text, File imgFile}) async {
     final FirebaseUser user = await _getUser();
 
-    if (user != null) {
+    if (user == null) {
       _scafoldKey.currentState.showSnackBar(SnackBar(
           content: Text("Não foi possivel fazer login, tente novamente."),
           backgroundColor: Colors.red));
@@ -62,18 +67,27 @@ class _ChatScreenState extends State<ChatScreen> {
     Map<String, dynamic> data = {
       "uid": user.uid,
       "sendName": user.displayName,
-      "sendPhotoUrl": user.photoUrl
+      "sendPhotoUrl": user.photoUrl,
+      "time": Timestamp.now()
     };
 
     if (imgFile != null) {
       StorageUploadTask task = FirebaseStorage.instance
           .ref()
-          .child(DateTime.now().millisecondsSinceEpoch.toString())
+          .child(user.uid + DateTime.now().millisecondsSinceEpoch.toString())
           .putFile(imgFile);
+
+      setState(() {
+        _isLoading = true;
+      });
 
       StorageTaskSnapshot taskSnapshot = await task.onComplete;
       String url = await taskSnapshot.ref.getDownloadURL();
       data['imgUrl'] = url;
+
+      setState(() {
+        _isLoading = false;
+      });
     }
 
     if (text != null) data['text'] = text;
@@ -85,6 +99,21 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       key: _scafoldKey,
       appBar: AppBar(
+        centerTitle: true,
+        actions: [
+          _currentUser != null
+              ? IconButton(
+                  icon: Icon(Icons.exit_to_app),
+                  onPressed: () {
+                    FirebaseAuth.instance.signOut();
+                    googleSignIn.signOut();
+                    _scafoldKey.currentState.showSnackBar(SnackBar(
+                        content: Text("Você saiu do chat."),
+                        backgroundColor: Colors.blueAccent));
+                  },
+                )
+              : Container()
+        ],
         title: Text("Chat"),
         elevation: 0,
       ),
@@ -92,7 +121,10 @@ class _ChatScreenState extends State<ChatScreen> {
         children: <Widget>[
           Expanded(
             child: StreamBuilder(
-              stream: Firestore.instance.collection('messages').snapshots(),
+              stream: Firestore.instance
+                  .collection('messages')
+                  .orderBy("time")
+                  .snapshots(),
               builder: (context, snapshot) {
                 switch (snapshot.connectionState) {
                   case ConnectionState.none:
@@ -106,14 +138,15 @@ class _ChatScreenState extends State<ChatScreen> {
                       itemCount: documents.length,
                       reverse: true,
                       itemBuilder: (context, index) {
-                        return ListTile(
-                            title: Text(documents[index].data['text']));
+                        return ChatMessage(documents[index].data,
+                            documents[index].data['uid'] == _currentUser?.uid);
                       },
                     );
                 }
               },
             ),
           ),
+          _isLoading ? LinearProgressIndicator() : Container(),
           TextComposer(_sendMessage)
         ],
       ),
